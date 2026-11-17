@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Placement Email Bot - Technical Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f1ea;
+      --bg-2: #efe7dc;
+      --panel: rgba(255, 255, 255, 0.76);
+      --panel-strong: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: rgba(31, 41, 55, 0.12);
+      --shadow: 0 20px 60px rgba(31, 41, 55, 0.12);
+      --accent: #0f766e;
+      --accent-2: #2563eb;
+      --accent-3: #ca8a04;
+      --danger: #b91c1c;
+      --success: #15803d;
+      --code: #0f172a;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 25%),
+        linear-gradient(180deg, var(--bg) 0%, #faf7f2 100%);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 32px;
+      padding: 36px 32px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 250, 244, 0.75));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+
+    .hero::before {
+      width: 240px;
+      height: 240px;
+      top: -120px;
+      right: -80px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, rgba(37, 99, 235, 0) 70%);
+    }
+
+    .hero::after {
+      width: 240px;
+      height: 240px;
+      left: -120px;
+      bottom: -120px;
+      background: radial-gradient(circle, rgba(15, 118, 110, 0.14) 0%, rgba(15, 118, 110, 0) 70%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(15, 118, 110, 0.08);
+      border: 1px solid rgba(15, 118, 110, 0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      margin-top: 18px;
+      max-width: 12ch;
+      position: relative;
+      z-index: 1;
+    }
+
+    .subtitle {
+      max-width: 900px;
+      margin-top: 18px;
+      font-size: 1.03rem;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat {
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+    }
+
+    .stat .label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat .value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 22px 24px 0;
+    }
+
+    .card-body {
+      padding: 18px 24px 24px;
+    }
+
+    .section-kicker {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 1.55rem;
+      margin-bottom: 10px;
+    }
+
+    .section-copy {
+      color: var(--muted);
+      max-width: 72ch;
+      margin-bottom: 18px;
+    }
+
+    .file-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    .file-table th,
+    .file-table td {
+      text-align: left;
+      vertical-align: top;
+      padding: 14px 14px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.08);
+    }
+
+    .file-table th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .file-name {
+      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.93rem;
+      color: var(--code);
+      font-weight: 600;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: rgba(15, 118, 110, 0.08);
+      padding: 14px 16px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      color: #174e4a;
+      margin: 18px 0 0;
+    }
+
+    .diagram {
+      border: 1px solid rgba(31, 41, 55, 0.08);
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .diagram + .diagram {
+      margin-top: 16px;
+    }
+
+    .diagram-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      margin: 0 0 10px;
+      color: var(--text);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .list-card {
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+    }
+
+    .list-card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+
+    .list-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text);
+    }
+
+    .list-card li + li {
+      margin-top: 8px;
+    }
+
+    .metric-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .metric-table td {
+      border-bottom: 1px solid rgba(31, 41, 55, 0.08);
+      padding: 10px 0;
+      vertical-align: top;
+    }
+
+    .metric-table td:first-child {
+      width: 220px;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .mini-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .mini-meta span {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+    }
+
+    .status-good {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .status-warn {
+      color: var(--accent-3);
+      font-weight: 700;
+    }
+
+    .status-risk {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.94rem;
+    }
+
+    .small {
+      font-size: 0.93rem;
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .appendix-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .appendix-list li + li {
+      margin-top: 10px;
+    }
+
+    .note-strip {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.14);
+      color: #1e3a8a;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-grid,
+      .grid-2,
+      .two-col {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 16px 12px 36px;
+      }
+
+      .hero {
+        padding: 24px 18px;
+        border-radius: 24px;
+      }
+
+      .hero-grid,
+      .grid-2,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .card-header,
+      .card-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .file-table th,
+      .file-table td {
+        padding: 12px 10px;
+      }
+
+      .metric-table td:first-child {
+        width: auto;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+
+      .hero,
+      .card,
+      .stat,
+      .list-card,
+      .diagram,
+      .chip,
+      .note-strip {
+        box-shadow: none !important;
+        background: #ffffff !important;
+      }
+
+      .hero::before,
+      .hero::after {
+        display: none;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .card,
+      .hero,
+      .diagram,
+      .list-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Technical report</div>
+      <h1>Placement Email Bot</h1>
+      <p class="subtitle">
+        A Manifest V3 Chrome extension that prepares contacts and email templates in a popup,
+        persists campaign state locally, and drives Gmail through a content script that opens,
+        fills, and sends messages sequentially.
+      </p>
+      <div class="hero-grid">
+        <div class="stat">
+          <span class="label">Architecture</span>
+          <span class="value">Popup + service worker + Gmail content script</span>
+        </div>
+        <div class="stat">
+          <span class="label">Execution model</span>
+          <span class="value">Client-side automation inside Gmail</span>
+        </div>
+        <div class="stat">
+          <span class="label">State storage</span>
+          <span class="value">chrome.storage.local for contacts, templates, logs</span>
+        </div>
+        <div class="stat">
+          <span class="label">Primary risk</span>
+          <span class="value">Gmail selector drift and long-running worker behavior</span>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <span>Source: chrome-extension workspace</span>
+        <span>Report format: HTML</span>
+        <span>Print-ready: yes</span>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="stack">
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">01 / overview</div>
+            <h2 class="section-title">What this extension does</h2>
+            <p class="section-copy">
+              The project is a Gmail-native outreach tool. The popup is the operator console,
+              the background worker is a relay and persistence layer, and the content script is the
+              executor that manipulates Gmail's compose UI. No server is involved; the extension
+              runs entirely in the browser.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="list-card">
+                <h3>Control plane</h3>
+                <ul>
+                  <li><span class="mono">popup.html</span> renders the operator dashboard.</li>
+                  <li><span class="mono">popup.js</span> parses CSV, edits templates, stores state, and starts/stops runs.</li>
+                  <li><span class="mono">popup.css</span> provides the polished visual system.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Execution plane</h3>
+                <ul>
+                  <li><span class="mono">content.js</span> automates Gmail compose and send actions.</li>
+                  <li><span class="mono">background.js</span> keeps state synchronized and relays stop events.</li>
+                  <li><span class="mono">manifest.json</span> wires permissions, host access, popup, and service worker.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="callout">
+              The core design is sound: the UI prepares the payload, the background worker keeps the session state available, and the Gmail content script performs the actual send loop.
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">02 / architecture</div>
+            <h2 class="section-title">System architecture</h2>
+            <p class="section-copy">
+              This diagram captures the main runtime boundaries and how data moves across them.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="diagram">
+              <div class="diagram-title">Overall extension architecture</div>
+              <div class="mermaid">
+flowchart LR
+  U[User] --> P[Popup UI\npopup.html + popup.js + popup.css]
+  P --> S[(chrome.storage.local)]
+  P --> B[Background Service Worker\nbackground.js]
+  P -->|start_sending| C[Content Script\ncontent.js]
+  B -->|relay stop_sending| C
+  C --> G[Gmail Compose UI]
+  C -->|progress_update / sending_complete| B
+  B --> S
+  C --> S
+  G --> M[Sent emails]
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">03 / flows</div>
+            <h2 class="section-title">How the send cycle works</h2>
+            <p class="section-copy">
+              The content script performs a deterministic sequence: open compose, fill fields,
+              send, wait, then repeat until the send limit or stop flag is reached.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="diagram">
+              <div class="diagram-title">Send sequence</div>
+              <div class="mermaid">
+sequenceDiagram
+  participant User
+  participant Popup
+  participant Content as content.js
+  participant Gmail
+  participant Bg as background.js
+  participant Store as chrome.storage.local
+
+  User->>Popup: Upload contacts and set template
+  Popup->>Store: Persist contacts, template, settings
+  User->>Popup: Start sending
+  Popup->>Content: start_sending payload
+  loop For each recipient
+    Content->>Gmail: Open compose window
+    Content->>Gmail: Fill To, CC, BCC, Subject, Body
+    Content->>Gmail: Click Send
+    Content->>Bg: progress_update
+    Bg->>Store: Persist updated sendingState
+    Bg-->>Popup: progress_update
+  end
+  Content->>Bg: sending_complete
+  Bg->>Store: Mark session complete
+  Bg-->>Popup: sending_complete
+              </div>
+            </div>
+
+            <div class="two-col" style="margin-top: 16px;">
+              <div class="list-card">
+                <h3>Per-recipient behavior</h3>
+                <ul>
+                  <li>Generate subject and body by replacing placeholders such as <span class="mono">{name}</span>, <span class="mono">{company}</span>, and <span class="mono">{position}</span>.</li>
+                  <li>Open Gmail compose and wait for the UI to stabilize before writing values.</li>
+                  <li>Click Send and then wait briefly so Gmail can show confirmation feedback.</li>
+                  <li>Log each success or failure in memory and mirrored storage.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Flow controls</h3>
+                <ul>
+                  <li>The loop stops when the send limit is reached.</li>
+                  <li>A stop request sets <span class="mono">shouldStop</span> and exits after the current attempt.</li>
+                  <li>Each iteration waits the configured delay before the next email.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">04 / state</div>
+            <h2 class="section-title">State and message model</h2>
+            <p class="section-copy">
+              The extension relies on a compact set of storage keys and message types to keep the UI
+              in sync with the Gmail automation session.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="diagram">
+                <div class="diagram-title">Persistence lifecycle</div>
+                <div class="mermaid">
+flowchart TB
+  A[Popup edits data] --> B[Save to chrome.storage.local]
+  B --> C[Popup reloads or reopens]
+  C --> D[Restore contacts, template, settings]
+  D --> E[Restore sending state and log]
+  E --> F[Continue dashboard view]
+  B --> G[Background mirrors progress updates]
+  G --> H[Popup can recover mid-session]
+                </div>
+              </div>
+              <div class="diagram">
+                <div class="diagram-title">Stop/cancel path</div>
+                <div class="mermaid">
+flowchart LR
+  U[User clicks Stop] --> P[Popup sends stop_sending]
+  P --> B[Background receives message]
+  B --> T[Query Gmail tabs]
+  T --> C[Send stop_sending to content script]
+  C --> F[Set shouldStop = true]
+  F --> L[Finish current iteration safely]
+                </div>
+              </div>
+            </div>
+
+            <div class="two-col" style="margin-top: 16px;">
+              <div class="list-card">
+                <h3>Storage keys</h3>
+                <table class="metric-table">
+                  <tr><td><span class="mono">contacts</span></td><td>Array of CSV-derived recipient objects.</td></tr>
+                  <tr><td><span class="mono">emailTemplate</span></td><td>Subject and body template text.</td></tr>
+                  <tr><td><span class="mono">cc</span> / <span class="mono">bcc</span></td><td>Global carbon-copy and blind-carbon-copy values.</td></tr>
+                  <tr><td><span class="mono">settings</span></td><td>Delay seconds and send limit.</td></tr>
+                  <tr><td><span class="mono">sendingState</span></td><td>Runtime progress, completion status, and log history.</td></tr>
+                </table>
+              </div>
+              <div class="list-card">
+                <h3>Message types</h3>
+                <table class="metric-table">
+                  <tr><td><span class="mono">start_sending</span></td><td>Popup to content script, carrying contacts and settings.</td></tr>
+                  <tr><td><span class="mono">stop_sending</span></td><td>Popup to background, then relayed to Gmail tabs.</td></tr>
+                  <tr><td><span class="mono">progress_update</span></td><td>Content script to background and popup.</td></tr>
+                  <tr><td><span class="mono">sending_complete</span></td><td>Marks the campaign finished and stores the final log.</td></tr>
+                  <tr><td><span class="mono">ping</span></td><td>Health check endpoint in content.js.</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">05 / file inventory</div>
+            <h2 class="section-title">Repository file-by-file analysis</h2>
+            <p class="section-copy">
+              Every file in the workspace has a clear role. This table documents what each file does
+              and how it contributes to the extension.
+            </p>
+          </div>
+          <div class="card-body">
+            <table class="file-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Role</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="file-name">manifest.json</td>
+                  <td>Extension manifest and permission boundary.</td>
+                  <td>Declares MV3, popup entry point, background service worker, Gmail host access, and the content script match rule.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">popup.html</td>
+                  <td>Operator dashboard markup.</td>
+                  <td>Defines the contact upload area, template editors, preview, CC/BCC inputs, settings, progress, logs, and footer state.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">popup.css</td>
+                  <td>Visual system for the popup.</td>
+                  <td>Dark glassmorphism styling with gradients, cards, responsive spacing, animated header, and polished controls.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">popup.js</td>
+                  <td>Popup controller and campaign state manager.</td>
+                  <td>Parses CSV, handles template editing, inserts placeholders, saves state, checks active Gmail tab, sends start/stop messages, and renders progress/logs.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">background.js</td>
+                  <td>MV3 service worker and relay layer.</td>
+                  <td>Seeds default storage on install, mirrors progress/completion into storage, and forwards stop requests to Gmail tabs.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">content.js</td>
+                  <td>Gmail automation engine.</td>
+                  <td>Finds Gmail compose controls, fills fields, handles CC/BCC, sends emails, tracks logs, and honors stop requests.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">README.md</td>
+                  <td>Minimal project documentation.</td>
+                  <td>Explains installation and the basic purpose of the extension, but does not yet cover the deeper runtime design.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">project-report.md</td>
+                  <td>Earlier lightweight report.</td>
+                  <td>This HTML file supersedes it with richer analysis and diagrams.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">LICENSE</td>
+                  <td>License text.</td>
+                  <td>MIT license placeholder; the project notes that the name and author values should be filled in as needed.</td>
+                </tr>
+                <tr>
+                  <td class="file-name">icons/README.md</td>
+                  <td>Icon asset guidance.</td>
+                  <td>States that icon PNGs are optional for development and explains the expected sizes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">06 / implementation</div>
+            <h2 class="section-title">Component-level behavior</h2>
+            <p class="section-copy">
+              The code is simple, but each component has a distinct responsibility boundary.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="list-card">
+                <h3>Popup layer</h3>
+                <ul>
+                  <li>Accepts CSV input and uses a hand-written parser that supports quoted fields and multiline values.</li>
+                  <li>Offers placeholder chips that insert tokens into subject/body fields.</li>
+                  <li>Renders a live preview from the first contact or a synthetic fallback contact.</li>
+                  <li>Persists template, settings, and contacts to local storage.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Gmail layer</h3>
+                <ul>
+                  <li>Uses several fallback selectors for compose, To, CC, BCC, Subject, Body, Send, and discard actions.</li>
+                  <li>Simulates input events so Gmail's own handlers can recognize changes.</li>
+                  <li>Sends one message at a time and waits between recipients according to the configured delay.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Background layer</h3>
+                <ul>
+                  <li>Acts as a bridge between runtime events and persistent storage.</li>
+                  <li>Stores the latest progress and final log so the popup can recover after closure.</li>
+                  <li>Relays stop commands to every open Gmail tab.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Data model</h3>
+                <ul>
+                  <li>Contacts are treated as dictionaries, so any CSV header can become a placeholder.</li>
+                  <li>Email templates are plain strings with token replacement.</li>
+                  <li>Logs record timestamped info, success, and error entries.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">07 / assessment</div>
+            <h2 class="section-title">Strengths, risks, and gaps</h2>
+            <p class="section-copy">
+              The project is functional and readable, but it also has a few risks that are worth
+              documenting because they shape how reliable the extension can be over time.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="list-card">
+                <h3>Strengths</h3>
+                <ul>
+                  <li>All logic runs locally in the browser, so there is no backend dependency.</li>
+                  <li>State persistence makes the session recoverable after popup closure.</li>
+                  <li>Multiple selector fallbacks improve resilience against minor Gmail UI changes.</li>
+                  <li>The code is modular enough to explain and maintain without external libraries.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Risks and gaps</h3>
+                <ul>
+                  <li><span class="status-risk">High</span>: Gmail DOM selectors can break when Google changes the UI.</li>
+                  <li><span class="status-risk">High</span>: The service worker keepalive listener exists, but no code currently opens the port, so long sessions may still rely on Chrome's worker lifetime behavior.</li>
+                  <li><span class="status-warn">Medium</span>: The popup accepts <span class="mono">.xlsx</span> files but explicitly warns that parsing is CSV-only.</li>
+                  <li><span class="status-warn">Medium</span>: There is no attachment handling, which the UI already acknowledges.</li>
+                  <li><span class="status-warn">Medium</span>: The send loop is sequential by design, so throughput is intentionally limited.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="note-strip">
+              The biggest technical dependency is not the extension framework itself; it is Gmail's current DOM and accessibility structure.
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">08 / roadmap</div>
+            <h2 class="section-title">Recommended improvements</h2>
+            <p class="section-copy">
+              If this extension is meant to become more production-ready, the following additions would
+              materially improve reliability and clarity.
+            </p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="list-card">
+                <h3>Reliability</h3>
+                <ul>
+                  <li>Add a real keepalive port connection from the content script if long sessions must survive worker suspension.</li>
+                  <li>Normalize and validate CSV columns before send time, with clear user-facing diagnostics.</li>
+                  <li>Separate Gmail selectors into a dedicated helper file for easier maintenance.</li>
+                </ul>
+              </div>
+              <div class="list-card">
+                <h3>Usability</h3>
+                <ul>
+                  <li>Add explicit import/export for campaign templates and logs.</li>
+                  <li>Provide a dry-run or preview-only mode to verify personalization before sending.</li>
+                  <li>Expand the report to include screenshots if the extension evolves into a deliverable product.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <aside class="stack">
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">Quick map</div>
+            <h2 class="section-title">File inventory snapshot</h2>
+          </div>
+          <div class="card-body">
+            <div class="chip-row">
+              <span class="chip">manifest.json</span>
+              <span class="chip">popup.html</span>
+              <span class="chip">popup.css</span>
+              <span class="chip">popup.js</span>
+              <span class="chip">background.js</span>
+              <span class="chip">content.js</span>
+              <span class="chip">README.md</span>
+              <span class="chip">project-report.md</span>
+              <span class="chip">LICENSE</span>
+              <span class="chip">icons/README.md</span>
+            </div>
+            <p class="footer-note">
+              There are no extra source folders beyond the browser extension entry points and the icon guidance note.
+            </p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">Key facts</div>
+            <h2 class="section-title">Technical summary</h2>
+          </div>
+          <div class="card-body">
+            <table class="metric-table">
+              <tr><td>Manifest</td><td>Chrome Manifest V3</td></tr>
+              <tr><td>Host scope</td><td><span class="mono">https://mail.google.com/*</span></td></tr>
+              <tr><td>Permissions</td><td>activeTab, storage, tabs</td></tr>
+              <tr><td>Automation target</td><td>Gmail compose UI</td></tr>
+              <tr><td>Persistence</td><td>Local-only browser storage</td></tr>
+              <tr><td>Dependencies</td><td>None at runtime; vanilla JS and CSS</td></tr>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">Appendix</div>
+            <h2 class="section-title">What the report covers</h2>
+          </div>
+          <div class="card-body">
+            <ul class="appendix-list">
+              <li>Repository structure and role of each file.</li>
+              <li>End-to-end runtime flow from popup input to Gmail send action.</li>
+              <li>Persistent state model and runtime message protocol.</li>
+              <li>System strengths, operational risks, and improvement ideas.</li>
+            </ul>
+            <p class="footer-note">
+              This HTML file is designed to be readable on screen and printable to PDF from the browser.
+            </p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div class="section-kicker">Conclusion</div>
+            <h2 class="section-title">Bottom line</h2>
+          </div>
+          <div class="card-body">
+            <p class="section-copy" style="margin-bottom: 0;">
+              The extension is a focused browser-native campaign tool with a clear three-layer split:
+              user preparation in the popup, orchestration in the background worker, and execution in
+              the Gmail content script. Its architecture is understandable and practical, but its
+              long-term reliability depends on Gmail selector maintenance and on ensuring the service
+              worker remains available for long send sessions.
+            </p>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      securityLevel: 'loose',
+      flowchart: {
+        useMaxWidth: true,
+        curve: 'basis'
+      },
+      themeVariables: {
+        background: '#ffffff',
+        primaryColor: '#e7f7f5',
+        primaryTextColor: '#1f2937',
+        primaryBorderColor: '#0f766e',
+        lineColor: '#64748b',
+        secondaryColor: '#eff6ff',
+        tertiaryColor: '#fff7ed',
+        fontFamily: 'Inter, system-ui, sans-serif'
+      }
+    });
+  </script>
+</body>
+</html>
