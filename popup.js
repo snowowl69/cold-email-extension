@@ -47,6 +47,12 @@
   const statusDot  = $('#statusDot');
   const statusText = $('#statusText');
 
+  const completionModal   = $('#completionModal');
+  const modalDoneBtn      = $('#modalDoneBtn');
+  const modalSentCount    = $('#modalSentCount');
+  const modalTotalCount   = $('#modalTotalCount');
+  const completionDetails = $('#completionDetails');
+
   // ── App State ───────────────────────────────────────────────
   let contacts = [];
   let isPreviewOpen = false;
@@ -471,6 +477,33 @@
     });
   });
 
+  // ── Completion Modal Controller ────────────────────────────
+  function showCompletionModal(sentCount, totalCount) {
+    if (!completionModal) return;
+    if (modalSentCount) modalSentCount.textContent = sentCount;
+    if (modalTotalCount) modalTotalCount.textContent = totalCount;
+    if (completionDetails) {
+      completionDetails.textContent = sentCount === totalCount
+        ? `All ${sentCount} emails have been sent successfully!`
+        : `Processed ${sentCount} of ${totalCount} emails. Check the activity log for any failed deliveries.`;
+    }
+    completionModal.style.display = 'flex';
+  }
+
+  if (modalDoneBtn) {
+    modalDoneBtn.addEventListener('click', () => {
+      completionModal.style.display = 'none';
+    });
+  }
+
+  if (completionModal) {
+    completionModal.addEventListener('click', (e) => {
+      if (e.target === completionModal) {
+        completionModal.style.display = 'none';
+      }
+    });
+  }
+
   // ── Listen for progress updates from content.js / background ─
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'progress_update') {
@@ -486,6 +519,10 @@
         }
       }
 
+      if (message.lastSent) {
+        showNotification(`✓ Sent to ${message.lastSent}`, 'success');
+      }
+
       if (!message.isSending) {
         hideSendingUI();
       }
@@ -494,7 +531,9 @@
     }
 
     if (message.type === 'sending_complete') {
-      updateProgress(message.current || 0, message.total || 0);
+      const sent = message.current || 0;
+      const total = message.total || 0;
+      updateProgress(sent, total);
       hideSendingUI();
 
       if (message.log) {
@@ -504,6 +543,9 @@
           addLogEntry(entry.type, entry.message, entry.time);
         }
       }
+
+      showNotification(`All Done! ${sent}/${total} emails sent.`, 'success');
+      showCompletionModal(sent, total);
 
       sendResponse({ ok: true });
     }

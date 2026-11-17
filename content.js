@@ -99,6 +99,139 @@
     });
   }
 
+  function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g,
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+  }
+
+  // ── In-Page Notification & Completion Popups on Gmail ───────
+  function showGmailToast(msg, type = 'success') {
+    let container = document.getElementById('placement-bot-toast-wrap');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'placement-bot-toast-wrap';
+      container.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      `;
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      background: #18181b;
+      color: #f4f4f5;
+      border: 1px solid ${type === 'success' ? '#22c55e' : '#ef4444'};
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(12px);
+    `;
+    toast.innerHTML = `<span style="color:${type === 'success' ? '#22c55e' : '#ef4444'}; font-weight:bold;">${type === 'success' ? '✓' : '✗'}</span> <span>${escapeHTML(msg)}</span>`;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(12px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  function showGmailDonePopup(sentCount, totalCount) {
+    const existing = document.getElementById('placement-bot-done-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'placement-bot-done-modal';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background: #1e1e24;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 28px 24px;
+        max-width: 340px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(34, 197, 94, 0.2);
+        color: #f4f4f5;
+      ">
+        <div style="
+          width: 58px;
+          height: 58px;
+          border-radius: 50%;
+          background: rgba(34, 197, 94, 0.15);
+          border: 2px solid #22c55e;
+          color: #22c55e;
+          font-size: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 16px;
+          font-weight: bold;
+          box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        ">✓</div>
+        <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 8px; color: #fff;">Emails Sent! 🎉</h3>
+        <p style="font-size: 13px; color: #a1a1aa; line-height: 1.5; margin-bottom: 20px;">
+          Placement Email Bot has completed. <strong>${sentCount} of ${totalCount}</strong> emails dispatched successfully.
+        </p>
+        <button id="pb-modal-close" style="
+          width: 100%;
+          padding: 12px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+        ">Done</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#pb-modal-close').addEventListener('click', () => {
+      overlay.remove();
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
   function openKeepalivePort() {
     if (keepalivePort) return;
 
@@ -343,18 +476,22 @@
       const contact = contacts[i];
       const contactName = contact.name || contact.Name || contact.email || `Contact ${i + 1}`;
 
+      let lastSentContact = null;
       try {
         addLog('info', `Sending to ${contactName}...`);
         await sendOneEmail(contact, template, cc, bcc);
         addLog('success', `✓ Sent to ${contactName}`);
+        lastSentContact = contactName;
+        showGmailToast(`Sent email to ${contactName} (${i + 1}/${total})`, 'success');
       } catch (err) {
         addLog('error', `✗ Failed for ${contactName}: ${err.message}`);
+        showGmailToast(`Failed for ${contactName}: ${err.message}`, 'error');
         // Try to close any open compose window before continuing
         await closeCompose();
       }
 
       // Report progress to popup / background
-      reportProgress(i + 1, total);
+      reportProgress(i + 1, total, lastSentContact);
 
       // Delay before next email (skip delay after last email)
       if (i < total - 1 && !shouldStop) {
@@ -366,15 +503,22 @@
     isSending = false;
     closeKeepalivePort();
 
+    const sentSuccess = shouldStop
+      ? sendLog.filter(l => l.type === 'success').length
+      : total;
+
     // Report completion
     chrome.runtime.sendMessage({
       type: 'sending_complete',
-      current: shouldStop ? sendLog.filter(l => l.type === 'success').length : total,
+      current: sentSuccess,
       total: total,
       log: sendLog
     });
 
     addLog('info', shouldStop ? 'Sending stopped.' : 'All emails sent! ✓');
+
+    // Show celebratory on-page popup on Gmail tab
+    showGmailDonePopup(sentSuccess, total);
   }
 
   // ── Helpers: Logging & Progress ─────────────────────────────
@@ -386,12 +530,13 @@
     });
   }
 
-  function reportProgress(current, total) {
+  function reportProgress(current, total, lastSent = null) {
     chrome.runtime.sendMessage({
       type: 'progress_update',
       current: current,
       total: total,
       isSending: isSending,
+      lastSent: lastSent,
       log: sendLog
     });
   }

@@ -158,6 +158,32 @@
       <span>Attachments not supported in extension mode. Use the <strong>Web App</strong> for attachment support.</span>
     </div>
 
+    <!-- ═══════════ COMPLETION MODAL POPUP ═══════════ -->
+    <div class="completion-modal-overlay" id="completionModal" style="display:none">
+      <div class="completion-modal-card">
+        <div class="completion-icon-wrapper">
+          <svg class="completion-check" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2 class="completion-title">All Done! 🎉</h2>
+        <p class="completion-subtitle" id="completionDetails">All emails have been processed and dispatched successfully.</p>
+        
+        <div class="completion-stats">
+          <div class="stat-box">
+            <span class="stat-number" id="modalSentCount">0</span>
+            <span class="stat-label">Delivered</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-number" id="modalTotalCount">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+        </div>
+
+        <button class="btn-modal-done" id="modalDoneBtn">Done</button>
+      </div>
+    </div>
+
     <!-- ═══════════ FOOTER ═══════════ -->
     <footer class="footer">
       <div class="footer-status" id="footerStatus">
